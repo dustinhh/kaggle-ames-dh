@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ames Housing Price Estimator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f7f8fa;
+            color: #1b1f23;
+        }
+        h1 {
+            margin-bottom: 0.5rem;
+        }
+        p.lead {
+            margin-top: 0;
+            color: #555;
+        }
+        form {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+        input, select {
+            border-radius: 6px;
+            border: 1px solid #d0d7de;
+            padding: 0.55rem;
+            font-size: 0.95rem;
+        }
+        small {
+            color: #6a737d;
+            margin-top: 0.25rem;
+        }
+        button {
+            grid-column: 1 / -1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            background-color: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .prediction {
+            margin-top: 1.5rem;
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        }
+        .prediction h2 {
+            margin: 0 0 0.5rem 0;
+        }
+        .errors {
+            margin-top: 1.5rem;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .errors ul {
+            margin: 0;
+            padding-left: 1.3rem;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Estimate Ames Sale Price</h1>
+    <p class="lead">
+        Adjust the high-impact features from the training run. Everything else stays at the training median or most common value.
+    </p>
+    <form method="post" action="/predict_form">
+        {% for field in fields %}
+        <div class="field">
+            <label for="{{ field.name }}">{{ field.label }}</label>
+            {% if field.input_type == "select" %}
+            <select id="{{ field.name }}" name="{{ field.name }}">
+                {% for option in field.options %}
+                <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <input
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                type="number"
+                value="{{ field.value }}"
+                step="{{ field.step }}"
+                min="{{ field.min }}"
+                max="{{ field.max }}"
+                required
+            >
+            {% endif %}
+            <small>{{ field.help }}</small>
+        </div>
+        {% endfor %}
+        <button type="submit">Estimate Price</button>
+    </form>
+
+    {% if prediction %}
+    <div class="prediction">
+        <h2>Estimated Sale Price</h2>
+        <p style="font-size: 1.75rem; font-weight: 600;">
+            ${{ "{:,.0f}".format(prediction) }}
+        </p>
+    </div>
+    {% endif %}
+
+    {% if errors and errors|length > 0 %}
+    <div class="errors">
+        <strong>Please check your inputs:</strong>
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</body>
+</html>

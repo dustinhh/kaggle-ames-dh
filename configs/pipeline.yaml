@@ -1,0 +1,73 @@
+project:
+  name: ames-housing-demo
+
+paths:
+  raw_data:  src/ames/data/AmesHousing.csv
+  data_dictionary: src/ames/data/data_dictionary.yaml
+  features: src/ames/data/features.parquet
+  model_artifact: src/ames/models/trained_model.pkl
+  parcel_shapefile: src/ames/data/Parcel_Shapefile/Parcels.shp
+  ndvi_raster: src/ames/data/naip/ndvi_ames.tif  # produced by scripts/build_ndvi.py
+
+data_processing:
+  feature_builder:
+    use_geo_features: true
+  geo_features:
+    parcel_id_column: PARCELID
+    features_join_column: PID
+    parcel_id_padding: 10
+    output_column: parcel_ndvi
+    external_ndvi:
+      path: src/ames/data/ndvi_by_parcel.gpkg
+      format: gpkg
+      layer: ndvi_by_parcel
+      id_column: PARCELID
+      value_column: median
+    ndvi:
+      raster: null         # defaults to paths.ndvi_raster when left null
+      band: 1              # band index containing NDVI values
+      nodata: null         # override raster nodata when needed
+      red_raster: null     # optional red-band override for manual NDVI
+      red_band: 1
+      nir_raster: null     # optional NIR-band override for manual NDVI
+      nir_band: 4
+  validation:
+    zscore_threshold: 3.0 #rule of thumb for outlier detection based on zscore
+    iqr_threshold: 1.5  #rule of thumb for outlier detection based on IQR
+    winsorize_limits:
+      lower: 0.01
+      upper: 0.99
+
+model:
+  name: random_forest
+  params:
+    n_estimators: 200
+    max_depth: 8
+    random_state: 42
+  tuning:
+    strategy: grid  # or "random"
+    cv: 5
+    scoring: neg_root_mean_squared_error
+    n_jobs: 1
+    param_grid:
+      n_estimators: [300, 400, 500]
+      max_depth: [8, 10, null]
+  # Elastic Net reference for future runs:
+  # name: elastic_net
+  # params:
+  #   alpha: 0.1
+  #   l1_ratio: 0.5
+  #   max_iter: 1000
+  # tuning:
+  #   strategy: grid
+  #   cv: 5
+  #   scoring: neg_root_mean_squared_error
+  #   n_jobs: 1
+  #   param_grid:
+  #     alpha: [0.01, 0.1, 1.0]
+  #     l1_ratio: [0.2, 0.5, 0.8]
+
+evaluation:
+  test_size: 0.2
+  metrics:
+    - rmse

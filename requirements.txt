@@ -1,0 +1,14 @@
+fastapi
+geopandas
+joblib
+numpy
+pandas
+matplotlib
+pyyaml
+rasterio
+requests
+scikit-learn
+shapely
+uvicorn
+Jinja2
+python-multipart
